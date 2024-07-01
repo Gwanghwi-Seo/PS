@@ -1,4 +1,5 @@
-// synthesis verilog_input_version verilog_2001
+// if statement latches
+// *Note: if not specify an else statement, will make a latch...
 module top_module (
     input      cpu_overheated,
     output reg shut_off_computer,

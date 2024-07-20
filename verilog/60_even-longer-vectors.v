@@ -4,8 +4,8 @@ module top_module(
     output [99:1] out_any,
     output [99:0] out_different );
 
-for (integer i = 0; i < 99; i = i+1) begin
-    
-end
+    assign out_both = in[99:1] & in[98:0];
+    assign out_any = in[98:0] | in[99:1];
+    assign out_different = in ^ ({in[0], in[99:1]});
 
 endmodule

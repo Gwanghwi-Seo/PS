@@ -1,6 +1,6 @@
-module counter #(
+module counter_fix #(
     parameter COUNTER_WIDTH=4
-) (
+)(
     input clk,
     input rst_n,
     input act,
@@ -26,7 +26,7 @@ always @* begin
                 else
                     next_state = CNTDN;
             else
-                next_state = IDLE;
+                next_state = IDLE; 
         end
 
         CNTUP: begin
@@ -42,7 +42,7 @@ always @* begin
                     else
                         next_state = CNTDN;
             else
-                next_state = IDLE;
+                next_state = IDLE;  
         end
 
         CNTDN: begin
@@ -51,46 +51,49 @@ always @* begin
                     if (count == (1 << COUNTER_WIDTH)-1)
                         next_state = OVFLW;
                     else
-                        next_state = CNTUP;
+                        next_state = CNTDN;
                 else
-                    if (count == 'b0)
+                    if (count == 4'b0000)
                         next_state = OVFLW;
                     else
-                        next_state = CNTDN;
+                        next_state = CNTUP; 
             else
                 next_state = IDLE;
         end
-        
+
         OVFLW: begin
             next_state = OVFLW;
         end
 
         default: begin
             next_state = 'bx;
-            $display("%t: State machine not initialized\n", $time);
         end
     endcase
 end
 
-// Sequential block (state transition)
-always @(posedge clk or negedge rst_n)
+always @(posedge clk or negedge rst_n) begin
     if (!rst_n)
         state <= IDLE;
     else
-        state <= next_state;
+        state <= next_state;  
+end
 
-always @(posedge clk or negedge rst_n)
+always @* begin
+    count = next_count;
+    if (state == CNTUP)
+        count = count + 1;
+    else if (state == CNTDN)
+        count = count - 1;
+end
+
+assign en_count = (state == CNTUP) || (state == CNTDN) ? 1'b1 : 1'b0;
+
+always @(posedge clk) begin
     if (!rst_n)
-        count <= 'b0;
-    else
-        if (state == CNTUP)
-            count <= count + 1'b1;
-        else if (state == CNTDN)
-            count <= count - 1'b1;
-        else
-            count <= 'b0;
+        next_count <= 0;
+    else if (en_count)
+        next_count <= count;
+end
 
-
-assign ovflw = (state == OVFLW) ? 1'b1: 1'b0;
     
 endmodule

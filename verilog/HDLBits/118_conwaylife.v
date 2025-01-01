@@ -6,57 +6,60 @@ module top_module(
 
     genvar i, j;
 
+    wire [255:0] next_q;
+
     generate
         for (i=0; i<16; i=i+1) begin: cell_row
             for (j=0; j<16; j=j+1) begin: cell_col
                 conway_cell cell_grid(
-                    .clk(clk),
-                    .i_data(data[i*16+j]),
-                    .i_load(load),
+                    .i_current(q[i*16+j]),
                     .i_neighbor({
-                        data[(((i-1)+16) % 16) * 16 + (((j-1)+16) % 16)],   // left upper
-                        data[(((i-1)+16) % 16) * 16 + j],                   // upper
-                        data[(((i-1)+16) % 16) * 16 + ((j+1) % 16)],          // right upper
-                        data[i*16 + (((j-1)+16) % 16)],                       // left
-                        data[i*16 + ((j+1) % 16)],                            // right
-                        data[((i+1) % 16) * 16 + ((j-1)+16) % 16],          // left down
-                        data[((i+1) % 16) * 16 + j],                        // down
-                        data[((i+1) % 16) * 16 + ((j+1) % 16)]              // right down
+                        q[(((i-1)+16) % 16) * 16 + (((j-1)+16) % 16)],   // left upper
+                        q[(((i-1)+16) % 16) * 16 + j],                   // upper
+                        q[(((i-1)+16) % 16) * 16 + ((j+1) % 16)],          // right upper
+                        q[i*16 + (((j-1)+16) % 16)],                       // left
+                        q[i*16 + ((j+1) % 16)],                            // right
+                        q[((i+1) % 16) * 16 + ((j-1)+16) % 16],          // left down
+                        q[((i+1) % 16) * 16 + j],                        // down
+                        q[((i+1) % 16) * 16 + ((j+1) % 16)]              // right down
                     }),
-                    .o_q(q[i*16+j])
+                    .o_next_q(next_q[i*16+j])
                 );
             end
         end
     endgenerate
 
+    always @(posedge clk) begin
+        if (load)
+            q <= data;
+        else
+            q <= next_q;
+    end
+
 endmodule
 
 module conway_cell(
-    input clk,
-    input i_data,
-    input i_load,
+    input i_current,
     input [7:0] i_neighbor,
-    output reg o_q
+    output reg o_next_q 
 );
 
-    reg [3:0] sum;
+    wire [2:0] sum;
+    
+    assign sum = {2'b00, i_neighbor[0]} +
+                 {2'b00, i_neighbor[1]} +
+                 {2'b00, i_neighbor[2]} +
+                 {2'b00, i_neighbor[3]} +
+                 {2'b00, i_neighbor[4]} +
+                 {2'b00, i_neighbor[5]} +
+                 {2'b00, i_neighbor[6]} +
+                 {2'b00, i_neighbor[7]};
 
     always @* begin
-        sum = i_neighbor[0] + i_neighbor[1] + i_neighbor[2] + 
-              i_neighbor[3] + i_neighbor[4] + i_neighbor[5] + 
-              i_neighbor[6] + i_neighbor[7];
+        case (sum)
+            3'd2: o_next_q = i_current;
+            3'd3: o_next_q = 1'd1;
+            default o_next_q = 1'd0;
+        endcase
     end
-
-    always @(posedge clk) begin
-        if (i_load) begin
-            o_q <= i_data;
-        end else begin
-            case (sum)
-                4'd2: o_q <= o_q;    // 상태 유지
-                4'd3: o_q <= 1'b1;   // 활성화
-                default: o_q <= 1'b0; // 비활성화
-            endcase
-        end
-    end
-
 endmodule

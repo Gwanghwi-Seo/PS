@@ -22,23 +22,36 @@ module top_module (
         next_fr2 = fr2;
         next_fr1 = fr1;
         next_dfr = dfr;
+        next_state = LV0;
         case (state)
             LV0: begin
-                next_fr3 = 1'b1;
-                next_fr2 = 1'b1;
-                next_fr1 = 1'b1;
-                next_dfr = 1'b0;
                 if (s[1]) begin
                     next_state = LV1;
+                    next_fr3 = 1'b0;
+                    next_fr2 = 1'b1;
+                    next_fr1 = 1'b1;
+                    next_dfr = 1'b0;
                 end
                 else if (s[1] & s[2]) begin
                     next_state = LV2;
+                    next_fr3 = 1'b0;
+                    next_fr2 = 1'b0;
+                    next_fr1 = 1'b1;
+                    next_dfr = 1'b0;
                 end
                 else if (s[1] & s[2] & s[3]) begin
                     next_state = LV3;
+                    next_fr3 = 1'b0;
+                    next_fr2 = 1'b0;
+                    next_fr1 = 1'b0;
+                    next_dfr = 1'b0;
                 end
                 else begin
                     next_state = LV0;
+                    next_fr3 = 1'b1;
+                    next_fr2 = 1'b1;
+                    next_fr1 = 1'b1;
+                    next_dfr = dfr;
                 end
             end
             LV1: begin
@@ -68,7 +81,7 @@ module top_module (
                     next_fr3 = 1'b0;
                     next_fr2 = 1'b1;
                     next_fr1 = 1'b1;
-                    next_dfr = 1'b0;
+                    next_dfr = dfr;
                 end
             end
             LV2: begin
@@ -92,6 +105,13 @@ module top_module (
                     next_fr2 = 1'b0;
                     next_fr1 = 1'b0;
                     next_dfr = 1'b0;
+                end
+                else begin
+                    next_state = LV2;
+                    next_fr3 = 1'b0;
+                    next_fr2 = 1'b0;
+                    next_fr1 = 1'b1;
+                    next_dfr = dfr;
                 end
             end
             LV3: begin
@@ -137,10 +157,10 @@ module top_module (
     always @(posedge clk) begin
         if (reset) begin
             state <= LV0;
-            fr3 <= 1'b0;
-            fr2 <= 1'b0;
-            fr1 <= 1'b0;
-            dfr <= 1'b0;
+            fr3 <= 1'b1;
+            fr2 <= 1'b1;
+            fr1 <= 1'b1;
+            dfr <= 1'b1;
         end
         else begin
             state <= next_state;

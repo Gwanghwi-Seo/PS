@@ -52,9 +52,10 @@ reg [3:0] next_trans_count;
 always @* begin
     next_trans_count = trans_count;
     case (state)
-        IDLE: next_trans_count = 'd0;
-        START: next_trans_count = next_trans_count + 4'd1;
-        default: ;
+        // IDLE: next_trans_count = 'd0;
+        START: next_trans_count = trans_count + 4'd1;
+        DATA: next_trans_count = trans_count + 4'd1;
+        default: next_trans_count = 'd0;
     endcase
 end
 

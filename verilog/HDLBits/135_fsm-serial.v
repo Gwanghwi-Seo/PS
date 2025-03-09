@@ -26,7 +26,7 @@ always @* begin
             next_state = DATA;
         end
         DATA: begin
-            next_state = (trans_count == 8) ? (in ? STOP: ERROR) : DATA;
+            next_state = (trans_count == 7) ? (in ? STOP: ERROR) : DATA;
         end
         STOP: begin
             next_state = in ? IDLE : START;
@@ -52,10 +52,17 @@ reg [3:0] next_trans_count;
 always @* begin
     next_trans_count = trans_count;
     case (state)
-        // IDLE: next_trans_count = 'd0;
-        START: next_trans_count = trans_count + 4'd1;
+        IDLE: ;
+
+        // START: next_trans_count = trans_count + 4'd1;
+        START: next_trans_count = 'd0;
+
         DATA: next_trans_count = trans_count + 4'd1;
-        default: next_trans_count = 'd0;
+
+        STOP: ;
+
+        ERROR: ;
+        default: ;
     endcase
 end
 

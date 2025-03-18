@@ -7,37 +7,39 @@ module top_module(
 ); //
 
     // Use FSM from Fsm_serial
-localparam IDLE     = 5'b00001,
-           DATA     = 5'b00010,
-           PARITY   = 5'b00100,
-           STOP     = 5'b01000,
-           ERROR    = 5'b10000;
+localparam IDLE     = 3'h0,
+           START    = 3'h1,
+           DATA     = 3'h2,
+           PARITY   = 3'h3,
+           STOP     = 3'h4,
+           ERROR    = 3'h5;
 
-reg [4:0] state, next_state;
+reg [2:0] state, next_state;
 
 reg [3:0] tx_count, next_tx_count;
 
 // State logic
 always @* begin
-    next_state = state;
     case (state)
         IDLE: begin
-            next_state = in ? IDLE : DATA;
+            next_state = in ? IDLE : START;
+        end
+        START: begin
+            next_state = DATA;
         end
         DATA: begin
-            next_state = (tx_count == 7) ? PARITY : DATA;
+            next_state = (tx_count == 8) ? PARITY : DATA;
         end
         PARITY: begin
-            // next_state = odd ? STOP : ERROR;
-            next_state = STOP;
+            next_state = in ? STOP : ERROR;
         end
         STOP: begin
-            next_state = (in & odd) ? IDLE : ERROR;
+            next_state = in ? IDLE : START;
         end
         ERROR: begin
             next_state = in ? IDLE : ERROR;
         end
-        default: ;
+        default: next_state = IDLE;
     endcase
 end
 
@@ -50,9 +52,6 @@ always @(posedge clk) begin
     end
 end
 
-// State transition condition
-// assign done = ((state == STOP) & (in)) ? 1'b1: 1'b0;
-
 reg [7:0] next_out_byte;
 reg next_done;
 
@@ -60,18 +59,25 @@ reg next_done;
 always @* begin
     next_tx_count = tx_count;
     next_out_byte = out_byte;
-    next_done = done;
-    case (state)
+    next_done = 'b0;
+    case (next_state)
         IDLE: begin
+            ;
+        end
+        START: begin
             next_tx_count = 4'd0;
-            next_done = 1'd0;
+            next_out_byte = 8'd0;
+            next_done = 1'b0;
         end
         DATA: begin
             next_tx_count = tx_count + 4'd1;
             next_out_byte = {in, out_byte[7:1]};
         end
+        PARITY: begin
+            ;
+        end
         STOP: begin
-            next_done = (in & odd) ? 1'b1 : 1'b0;
+            next_done = odd;
         end
         ERROR: begin
             ;
@@ -97,7 +103,9 @@ end
 
 // parity
 wire odd;
-// parity parity (.clk(clk), .reset(reset), .in((state == DATA) & in), .odd(odd));
-parity parity (.clk(clk), .reset((state == IDLE)), .in(in), .odd(odd));
+wire reset_parity;
+
+assign reset_parity = reset | (next_state == START);
+parity parity (.clk(clk), .reset(reset_parity), .in(in), .odd(odd));
 
 endmodule

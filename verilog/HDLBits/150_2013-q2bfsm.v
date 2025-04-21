@@ -6,7 +6,7 @@ module top_module (
     output f,
     output g
 ); 
-
+    
     // State define
     localparam A = 4'h0,
                B = 4'h1,
@@ -16,9 +16,7 @@ module top_module (
                F = 4'h5,
                G = 4'h6,
                H = 4'h7,
-               I = 4'h8,
-               J = 4'h9,
-               K = 4'h10;
+               I = 4'h8;
 
     reg [3:0] state, next_state;
 
@@ -26,16 +24,14 @@ module top_module (
     always @* begin
         case (state)
             A: next_state = B;
-            B: next_state = x ? C : D;
-            C: next_state = x ? E : C;
-            D: next_state = x ? D : G;
-            E: next_state = x ? D : G;
-            F: next_state = x ? E : F;
-            G: next_state = x ? H : F;
-            H: next_state = y ? J : I;
-            I: next_state = y ? J : I;
-            J: next_state = J;
-            K: next_state = 
+            B: next_state = C;
+            C: next_state = x ? D : C;
+            D: next_state = x ? D : E;
+            E: next_state = x ? F : C;
+            F: next_state = y ? H : G;
+            G: next_state = y ? H : I;
+            H: next_state = H;
+            I: next_state = I;
             default:;
         endcase
     end
@@ -51,7 +47,7 @@ module top_module (
     end
 
     // Output logic
-    assign f = ((state == B) | (state == G));
-    assign g = ((state == J)) ;
+    assign f = ((state == B));
+    assign g = ((state == F) | (state == H) |(state == G)) ;
 
 endmodule

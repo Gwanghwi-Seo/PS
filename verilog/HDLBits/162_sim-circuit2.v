@@ -23,6 +23,6 @@ module top_module (
     input d,
     output q );//
 
-    assign q = a ?  // Fix me
+    assign q = ~((a^b) ^ (c^d));
 
 endmodule

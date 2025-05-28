@@ -14,48 +14,52 @@ module top_module(
     input [6:0] train_pc
 );
 
-    localparam SNT = 2'h0, // strong not taken
-               WNT = 2'h1, // weat not taken  <- init
-               WT  = 2'h2, // weak taken
-               ST  = 2'h3; // strong taken
+    localparam SNT = 2'h0,
+    		   WNT = 2'h1,
+    		   WT  = 2'h2,
+      		   ST  = 2'h3;
 
-    reg [1:0] pht, next_pht;
+    reg [1:0] pht [0:127];
 
-    always @* begin
-        next_pht = pht;
+    wire [6:0] predict_index;
+    wire [6:0] train_index;
 
-        case (pht)
-            SNT: next_pht = train_valid ? (train_taken ? WNT : SNT) : pht;
-            WNT: next_pht = train_valid ? (train_taken ? WT  : SNT) : pht;
-            WT : next_pht = train_valid ? (train_taken ? ST  : WNT) : pht;
-            ST : next_pht = train_valid ? (train_taken ? ST  : WT) : pht;
-            default:;
-        endcase
-    end
+    integer i;
 
+    // pht
     always @(posedge clk, posedge areset) begin
-        if (areset)
-            pht <= WNT;
-        else
-            pht <= next_pht;
+        if (areset) begin
+            for (i=0; i<128; i=i+1) begin
+                pht[i] <= WNT;
+            end
+        end
+        else begin
+            if (train_valid) begin
+                pht[train_index] <= train_taken ? ((pht[train_index] == ST) ? ST : pht[train_index] + 1'b1) :
+                ((pht[train_index] == SNT) ? SNT : pht[train_index] - 1'b1);
+            end
+        end
     end
 
-    // output logic
+    // history table
     always @(posedge clk, posedge areset) begin
         if (areset) begin
             predict_history <= 7'h0;
         end
         else begin
-            if (train_mispredicted) begin
-                // predict_history <= 
+        	if (train_valid && train_mispredicted) begin
+            	predict_history <= {train_history[5:0], train_taken};
+        	end
+        	else begin
+            	if (predict_valid) begin
+            		predict_history <= {predict_history[5:0], predict_taken};
+                end
             end
-            else begin
-                predict_history <= {predict_}
-            end
-  
         end
     end
 
-    assign predict_taken = (pht == WT) | (pht == ST);
+    assign predict_index = predict_pc ^ predict_history;
+    assign train_index = train_pc ^ train_history;
 
+    assign predict_taken = pht[predict_index][1];
 endmodule

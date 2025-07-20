@@ -4,27 +4,38 @@ module model #(parameter
   input clk,
   input resetn,
   input [DATA_WIDTH-1:0] din,
-  output wire [DATA_WIDTH-1:0] dout
+  output logic [DATA_WIDTH-1:0] dout
 );
 
 logic [DATA_WIDTH-1:0] prev_din;
 logic [DATA_WIDTH-1:0] second_largest;
+logic [DATA_WIDTH-1:0] largest;
 
 always @(posedge clk) begin
     if (!resetn) begin
         prev_din <= 'h0;
         second_largest <= 'h0;
+        largest <= 'h0;
     end
     else begin
-        prev_din <= din;
+        // if ((din > second_largest) && (din > largest)) begin
+        //     largest <= din;
+        //     second_largest <= largest;
+        // end
+        // else if (din < second_largest) begin
+        //     second_largest <= din;
+        // end
 
-        if ((prev_din < second_largest) && (second_largest < din)) begin
-            second_largest <= prev_din;
+        // Found largest first
+        if (din > largest) begin
+            largest <= din;
+            second_largest <= largest;
+        end
+        else if (second_largest < din && din < largest) begin
+            second_largest <= din;
         end
     end
 end
 assign dout = second_largest;
-
-// prev_din < second_largest < din
 
 endmodule
